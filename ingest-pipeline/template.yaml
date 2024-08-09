@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM template for LanceDB and Bedrock integration Lambda
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: S3 bucket name for uploading JSON files
+    Default: rag-lancedb
+  IndexName:
+    Type: String
+    Description: The name of the LanceDB index to use
+    Default: rag
+  ImageTag:
+    Type: String
+    Description: The tag of the Docker image to deploy
+
+Resources:
+  RagS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+
+  BedrockLanceDBFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 120
+      PackageType: Image
+      ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/lance-rag-function:${ImageTag}"
+      ImageConfig:
+        Command: ["app.lambda_handler"]
+      Environment:
+        Variables:
+          INDEX_NAME: !Ref IndexName
+          LANCEDB_STORE: !Ref BucketName
+
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:DeleteObject
+                - s3:PutObject
+              Resource:
+                - !Sub "arn:aws:s3:::${BucketName}"
+                - !Sub "arn:aws:s3:::${BucketName}/*"
+            - Effect: Allow
+              Action:
+                - s3:ListBucket
+                - s3:GetBucketLocation
+              Resource: !Sub "arn:aws:s3:::${BucketName}"
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: "arn:aws:bedrock:*:*:foundation-model/*"
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref RagS3Bucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix
+                    Value: .json
+
+Outputs:
+  BedrockLanceDBFunction:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt BedrockLanceDBFunction.Arn
+  RagS3Bucket:
+    Description: "S3 Bucket Name"
+    Value: !Ref RagS3Bucket

@@ -1,0 +1,7 @@
+boto3==1.34.157
+Flask==2.3.2
+lancedb==0.12.0
+pyarrow==17.0.0
+loguru==0.7.2
+langchain-aws==0.1.16
+langchain-community==0.2.11
