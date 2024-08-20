@@ -110,7 +110,7 @@ def query_handler():
 
         def generate():
             for chunk in stream:
-                chunk_str = chunk.content  # Convert the chunk to a string or use chunk.content if applicable
+                chunk_str = chunk.content
                 if streaming_format == 'fetch-event-source':
                     yield f"event: message\n"
                     yield f"data: {chunk_str}\n\n"

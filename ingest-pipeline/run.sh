@@ -36,6 +36,8 @@ cd ..
 # Generate a unique image tag based on the current date and time
 export IMAGE_TAG=$(date +%Y%m%d%H%M%S)
 
+echo "Image Tag: $IMAGE_TAG"
+
 # Tag the Docker image with the unique tag
 IMAGE_URI="${AWS_ACCOUNT_NUMBER}.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME:$IMAGE_TAG"
 docker tag lance-rag-function:latest "$IMAGE_URI"
